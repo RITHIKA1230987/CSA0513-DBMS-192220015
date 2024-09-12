@@ -1,0 +1,95 @@
+# Read data
+data <- read.table("/Users/Admin/Downloads/GSE272300.top.table.tsv", header = TRUE, sep = "\t")
+head(data)
+# Remove rows with any null (NA) values
+data_clean <- na.omit(data)
+# Remove duplicate rows
+data_clean <- data_clean[!duplicated(data_clean), ]
+# Sort the table by 'p' column in descending order
+data_sorted <- data_clean[order(data_clean$pvalue, decreasing = TRUE), ]
+# Filter rows where the 'p' value is below 0.05
+data_filtered <- data_sorted[data_sorted$pvalue < 0.05, ]
+# Sort the filtered data by 'log2FoldChange' in decreasing order
+data_final <- data_filtered[order(data_filtered$log2FoldChange, decreasing = TRUE), ]
+# Check the sorted data
+head(data_final,50)
+
+# Sample data (replace this with your actual data)
+# data_final <- data.frame(log2FoldChange = rnorm(100))
+# Compute density estimate
+density_est <- density(data_final$log2FoldChange)
+# Plot density estimate
+plot(density_est, 
+     main = "Density Plot of log2FoldChange",
+     xlab = "log2FoldChange",
+     ylab = "Density",
+     col = "blue",
+     lwd = 2) # Line width
+# Optionally, add a shaded area for better visualization
+polygon(density_est, col = "lightblue", border = NA)
+
+# Sample data (replace this with your actual data)
+# data_final <- data.frame(log2FoldChange = rnorm(100), 
+#                           pvalue = runif(100), 
+#                           padj = runif(100))
+# Compute -log10(pvalue) and create a logical vector for significance
+data_final$neg_log10_pvalue <- -log10(data_final$pvalue)
+significant <- data_final$padj < 0.05
+# Create plot
+plot(data_final$log2FoldChange, 
+     data_final$neg_log10_pvalue, 
+     col = ifelse(significant, "pink", "black"),
+     pch = 16, # Point character
+     xlab = "log2FoldChange",
+     ylab = "-log10(pvalue)",
+     main = "Volcano Plot",
+     cex = 0.7) # Point size
+# Optionally add a legend
+legend("topright", 
+       legend = c("Significant", "Not Significant"), 
+       col = c("red", "black"), 
+       pch = 16)
+
+
+# Prepare data for top 20 genes
+top_genes <- data_final[1:20, ]  # Selecting top 20 genes
+# Set up plotting area
+barplot(height = top_genes$log2FoldChange, 
+        names.arg = top_genes$Symbol, 
+        las = 2, # Rotate axis labels
+        col = "lightgreen", 
+        main = "Top 20 Genes by log2FoldChange", 
+        xlab = "Gene Symbol", 
+        ylab = "log2FoldChange", 
+        cex.names = 0.7) # Adjust label size for readability
+
+# Compute log10(baseMean)
+data_final$log10_baseMean <- log10(data_final$baseMean)
+# Create the MA plot
+plot(data_final$log10_baseMean, 
+     data_final$log2FoldChange, 
+     col = rgb(0, 0, 1, 0.7), # Blue color with 70% transparency
+     pch = 16, # Point character (solid circle)
+     xlab = "log10(baseMean)",
+     ylab = "log2FoldChange",
+     main = "MA Plot",
+     cex = 0.7) # Point size
+# Add optional grid lines for better visualization
+grid()
+
+# Sample Data (Replace this with your actual data)
+set.seed(123)
+data_matrix <- matrix(rnorm(100), nrow = 10)
+rownames(data_matrix) <- paste0("Gene", 1:10)
+colnames(data_matrix) <- paste0("Sample", 1:10)
+# Compute Correlation Matrix
+cor_matrix <- cor(data_matrix)
+# Create heatmap
+heatmap(cor_matrix, 
+        col = colorRampPalette(c("blue", "white", "red"))(100), 
+        scale = "none", # Use "none" to not scale the rows/columns
+        main = "Correlation Heatmap", 
+        xlab = "Samples", 
+        ylab = "Genes", 
+        cexRow = 0.7, # Adjust size of row labels
+        cexCol = 0.7) # Adjust size of column labels
